@@ -1,113 +1,183 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
+"""
+SCRIPT DE DIAGNOSTIC - À utiliser temporairement sur Railway
+Ce script affiche les erreurs exactes au démarrage
+"""
+
 import os
-from flask import Flask, request, render_template, redirect, url_for, abort, flash, session, g
-from dotenv import load_dotenv
-import pymysql.cursors
+import sys
+import traceback
+from flask import Flask
 
-# Charger les variables d'environnement
-load_dotenv()
-
-# Import des blueprints
-from controllers.auth_security import auth_security
-from controllers.fixtures_load import fixtures_load
-from controllers.client_ski import client_ski
-from controllers.client_panier import client_panier
-from controllers.client_commande import client_commande
-from controllers.client_commentaire import client_commentaire
-from controllers.client_coordonnee import client_coordonnee
-from controllers.client_liste_envies import client_liste_envies
-from controllers.admin_ski import admin_ski
-from controllers.admin_declinaison_ski import admin_declinaison_ski
-from controllers.admin_commande import admin_commande
-from controllers.admin_type_ski import admin_type_ski
-from controllers.admin_dataviz import admin_dataviz
-from controllers.admin_commentaire import admin_commentaire
-
-# Initialisation de l'application Flask
 app = Flask(__name__)
 app.secret_key = 'une cle(token) : grain de sel(any random string)'
 
+# Afficher les informations de diagnostic
+print("=" * 80)
+print("🔍 DIAGNOSTIC DE DÉMARRAGE")
+print("=" * 80)
 
-# Fonction de connexion à la base de données
-def get_db():
-    """Connexion à la base de données MySQL"""
-    if 'db' not in g:
-        g.db = pymysql.connect(
-            host=os.environ.get('MYSQLHOST'),
-            user=os.environ.get('MYSQLUSER'),
-            password=os.environ.get('MYSQLPASSWORD'),
-            database=os.environ.get('MYSQLDATABASE'),
-            port=int(os.environ.get('MYSQLPORT', 3306)),
-            charset='utf8mb4',
-            cursorclass=pymysql.cursors.DictCursor
-        )
-    return g.db
+# 1. Vérifier les variables d'environnement
+print("\n📋 VARIABLES D'ENVIRONNEMENT:")
+env_vars = ['MYSQLHOST', 'MYSQLUSER', 'MYSQLPASSWORD', 'MYSQLDATABASE', 'MYSQLPORT', 'PORT']
+for var in env_vars:
+    value = os.environ.get(var)
+    if 'PASSWORD' in var and value:
+        print(f"  ✅ {var}: ***")
+    elif value:
+        print(f"  ✅ {var}: {value}")
+    else:
+        print(f"  ❌ {var}: NON DÉFINIE")
 
-
-# Fermeture de la connexion à la fin de chaque requête
-@app.teardown_appcontext
-def teardown_db(exception):
-    """Ferme la connexion DB à la fin de chaque requête"""
-    db = g.pop('db', None)
-    if db is not None:
-        db.close()
-
-
-# Route d'accueil
-@app.route('/')
-def show_accueil():
-    """Page d'accueil - redirige selon le rôle de l'utilisateur"""
-    if 'role' in session:
-        if session['role'] == 'ROLE_admin':
-            return redirect('/admin/commande/index')
+# 2. Vérifier le répertoire courant et les fichiers
+print("\n📂 STRUCTURE DU PROJET:")
+print(f"  Répertoire courant: {os.getcwd()}")
+print(f"  Contenu:")
+try:
+    for item in sorted(os.listdir('.')):
+        if os.path.isdir(item):
+            print(f"    📁 {item}/")
+            if item == 'controllers':
+                try:
+                    controllers_files = os.listdir(item)
+                    print(f"       → {len(controllers_files)} fichiers trouvés")
+                    for cf in sorted(controllers_files)[:5]:  # Afficher les 5 premiers
+                        print(f"         • {cf}")
+                except Exception as e:
+                    print(f"       → ERREUR: {e}")
+            elif item == 'templates':
+                try:
+                    templates_files = os.listdir(item)
+                    print(f"       → {len(templates_files)} fichiers/dossiers trouvés")
+                except Exception as e:
+                    print(f"       → ERREUR: {e}")
         else:
-            return redirect('/client/ski/show')
-    return render_template('auth/layout.html')
+            print(f"    📄 {item}")
+except Exception as e:
+    print(f"  ❌ ERREUR lors de la lecture du répertoire: {e}")
 
+# 3. Tester les imports un par un
+print("\n🔌 TEST DES IMPORTS:")
 
-# Middleware de sécurité
-@app.before_request
-def before_request():
-    """Vérifie les autorisations avant chaque requête admin/client"""
-    if request.path.startswith('/admin') or request.path.startswith('/client'):
-        print('session start with /admin or /client')
-        
-        # Vérification de la présence d'un rôle
-        if 'role' not in session:
-            return redirect('/login')
-        
-        # Vérification de l'autorisation selon le rôle
-        print('role', session['role'])
-        if (request.path.startswith('/client') and session['role'] != 'ROLE_client') or \
-           (request.path.startswith('/admin') and session['role'] != 'ROLE_admin'):
-            print('pb de route : ', session['role'], request.path.title(), ' => deconnexion')
-            session.pop('login', None)
-            session.pop('role', None)
-            flash("PB route / rôle / autorisation", "alert-warning")
-            return redirect('/logout')
+print("  Testing: import pymysql...")
+try:
+    import pymysql
+    print("  ✅ pymysql OK")
+except Exception as e:
+    print(f"  ❌ pymysql ERREUR: {e}")
 
+print("  Testing: from dotenv import load_dotenv...")
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("  ✅ dotenv OK")
+except Exception as e:
+    print(f"  ❌ dotenv ERREUR: {e}")
 
-# Enregistrement des blueprints
-app.register_blueprint(auth_security)
-app.register_blueprint(fixtures_load)
-app.register_blueprint(client_ski)
-app.register_blueprint(client_commande)
-app.register_blueprint(client_commentaire)
-app.register_blueprint(client_panier)
-app.register_blueprint(client_coordonnee)
-app.register_blueprint(client_liste_envies)
-app.register_blueprint(admin_ski)
-app.register_blueprint(admin_declinaison_ski)
-app.register_blueprint(admin_commande)
-app.register_blueprint(admin_type_ski)
-app.register_blueprint(admin_dataviz)
-app.register_blueprint(admin_commentaire)
+print("  Testing: import controllers (structure)...")
+try:
+    import controllers
+    print("  ✅ package 'controllers' trouvé")
+except Exception as e:
+    print(f"  ❌ package 'controllers' non trouvé: {e}")
 
+# 4. Tester chaque import de controller
+controllers_to_test = [
+    'auth_security',
+    'fixtures_load',
+    'client_ski',
+    'client_panier',
+    'client_commande',
+    'client_commentaire',
+    'client_coordonnee',
+    'client_liste_envies',
+    'admin_ski',
+    'admin_declinaison_ski',
+    'admin_commande',
+    'admin_type_ski',
+    'admin_dataviz',
+    'admin_commentaire'
+]
 
-# Point d'entrée de l'application
+print("\n🔌 TEST DES CONTROLLERS:")
+failed_imports = []
+for controller in controllers_to_test:
+    try:
+        exec(f"from controllers.{controller} import *")
+        print(f"  ✅ controllers.{controller}")
+    except Exception as e:
+        print(f"  ❌ controllers.{controller}: {str(e)[:60]}")
+        failed_imports.append((controller, str(e)))
+
+# 5. Tester la connexion MySQL
+print("\n🔌 TEST CONNEXION MYSQL:")
+try:
+    from flask import g
+    import pymysql.cursors
+    
+    connection = pymysql.connect(
+        host=os.environ.get('MYSQLHOST'),
+        user=os.environ.get('MYSQLUSER'),
+        password=os.environ.get('MYSQLPASSWORD'),
+        database=os.environ.get('MYSQLDATABASE'),
+        port=int(os.environ.get('MYSQLPORT', 3306)),
+        charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor
+    )
+    print("  ✅ Connexion MySQL réussie")
+    
+    cursor = connection.cursor()
+    cursor.execute("SELECT VERSION()")
+    version = cursor.fetchone()
+    print(f"  ✅ Version MySQL: {version}")
+    
+    cursor.execute("SHOW TABLES")
+    tables = cursor.fetchall()
+    print(f"  ✅ Nombre de tables: {len(tables)}")
+    
+    connection.close()
+    
+except Exception as e:
+    print(f"  ❌ Connexion MySQL ÉCHOUÉE:")
+    print(f"     {traceback.format_exc()}")
+
+# 6. Afficher le résumé
+print("\n" + "=" * 80)
+print("📊 RÉSUMÉ DU DIAGNOSTIC")
+print("=" * 80)
+
+if failed_imports:
+    print(f"\n❌ {len(failed_imports)} CONTROLLERS ÉCHOUÉS:")
+    for controller, error in failed_imports:
+        print(f"\n  • {controller}:")
+        print(f"    {error[:200]}")
+    print("\n⚠️  L'APPLICATION NE PEUT PAS DÉMARRER CAR DES IMPORTS ÉCHOUENT")
+else:
+    print("\n✅ TOUS LES CONTROLLERS IMPORTÉS AVEC SUCCÈS")
+    print("✅ SI VOUS VOYEZ CE MESSAGE, LE PROBLÈME EST AILLEURS")
+
+print("\n" + "=" * 80)
+
+# Route de test
+@app.route('/')
+def home():
+    return """
+    <html>
+    <head><title>Diagnostic App</title></head>
+    <body style="font-family: Arial; padding: 50px; background: #f0f0f0;">
+        <h1>✅ L'application Flask démarre !</h1>
+        <p>Consultez les logs Railway pour voir le diagnostic complet.</p>
+        <p>Si vous voyez cette page, Gunicorn et Flask fonctionnent.</p>
+    </body>
+    </html>
+    """
+
+@app.route('/health')
+def health():
+    return {'status': 'ok', 'message': 'Application running'}
+
 if __name__ == "__main__":
-    # Railway fournit automatiquement le port via la variable PORT
     port = int(os.environ.get("PORT", 5000))
-    # Écoute sur 0.0.0.0 pour accepter les connexions externes
+    print(f"\n🚀 Démarrage de l'application sur le port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
