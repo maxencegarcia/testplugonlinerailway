@@ -107,6 +107,11 @@ app.register_blueprint(admin_dataviz)
 app.register_blueprint(admin_commentaire)
 
 
-if __name__ == '__main__':
-    app.run()
+import os
+
+if __name__ == "__main__":
+    # On demande à Flask de prendre le port donné par Railway, ou 5000 par défaut
+    port = int(os.environ.get("PORT", 5000))
+    # On force l'écoute sur 0.0.0.0 pour accepter les connexions externes
+    app.run(host='0.0.0.0', port=port)
 
