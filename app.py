@@ -30,13 +30,11 @@ import os # Assure-toi que cette ligne est en haut du fichier
 def get_db():
     if 'db' not in g:
         g.db = pymysql.connect(
-            # On récupère les variables de Railway, sinon on met des valeurs par défaut
-            host=os.environ.get('MYSQLHOST', 'localhost'),
-            user=os.environ.get('MYSQLUSER', 'root'),
-            password=os.environ.get('MYSQLPASSWORD', ''),
-            database=os.environ.get('MYSQLDATABASE', 'railway'),
+            host=os.environ.get('MYSQLHOST'),
+            user=os.environ.get('MYSQLUSER'),
+            password=os.environ.get('MYSQLPASSWORD'),
+            database=os.environ.get('MYSQLDATABASE'),
             port=int(os.environ.get('MYSQLPORT', 3306)),
-            charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
         )
     return g.db
