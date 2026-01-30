@@ -25,7 +25,7 @@ import pymysql.cursors
 import os                                 # à ajouter
 from dotenv import load_dotenv            # à ajouter
 load_dotenv()                             # à ajouter
-def get_db()
+def get_db() :
     if 'db' not in g:
         g.db = pymysql.connect(
             host="serveurmysql.iut-bm.univ-fcomte.fr", # Directement l'adresse
