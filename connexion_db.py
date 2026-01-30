@@ -4,20 +4,21 @@ import pymysql.cursors
 
 import os
 
+import pymysql.cursors
+import os
+
 def get_db():
-    return pymysql.connect(
-        host=os.environ.get('MYSQLHOST', 'localhost'),
-        user=os.environ.get('MYSQLUSER', 'root'),
-        password=os.environ.get('MYSQLPASSWORD', ''),
-        database=os.environ.get('MYSQLDATABASE', 'railway'),
+    db = pymysql.connect(
+        host=os.environ.get('MYSQLHOST'),
+        user=os.environ.get('MYSQLUSER'),
+        password=os.environ.get('MYSQLPASSWORD'),
+        database=os.environ.get('MYSQLDATABASE'),
         port=int(os.environ.get('MYSQLPORT', 3306)),
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor
     )
-        # à activer sur les machines personnelles :
-        activate_db_options(db)
     return db
-
+    
 def activate_db_options(db):
     cursor = db.cursor()
     # Vérifier et activer l'option ONLY_FULL_GROUP_BY si nécessaire
