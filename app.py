@@ -25,13 +25,17 @@ import pymysql.cursors
 import os                                 # à ajouter
 from dotenv import load_dotenv            # à ajouter
 load_dotenv()                             # à ajouter
-def get_db() :
+import os # Assure-toi que cette ligne est en haut du fichier
+
+def get_db():
     if 'db' not in g:
         g.db = pymysql.connect(
-            host="serveurmysql.iut-bm.univ-fcomte.fr", # Directement l'adresse
-            user="educret", 
-            password="votre_mot_de_passe_ici", # Mets ton vrai mot de passe
-            database="BDD_educret_sae",
+            # On récupère les variables de Railway, sinon on met des valeurs par défaut
+            host=os.environ.get('MYSQLHOST', 'localhost'),
+            user=os.environ.get('MYSQLUSER', 'root'),
+            password=os.environ.get('MYSQLPASSWORD', ''),
+            database=os.environ.get('MYSQLDATABASE', 'railway'),
+            port=int(os.environ.get('MYSQLPORT', 3306)),
             charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
         )
