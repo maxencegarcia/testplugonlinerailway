@@ -2,13 +2,11 @@ from flask import Flask, request, render_template, redirect, url_for, abort, fla
 
 import pymysql.cursors
 
-import os
-
 import pymysql.cursors
 import os
 
 def get_db():
-    db = pymysql.connect(
+    return pymysql.connect(
         host=os.environ.get('MYSQLHOST'),
         user=os.environ.get('MYSQLUSER'),
         password=os.environ.get('MYSQLPASSWORD'),
@@ -17,4 +15,4 @@ def get_db():
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor
     )
-    return db
+
