@@ -35,9 +35,11 @@ def get_db():
             password=os.environ.get('MYSQLPASSWORD'),
             database=os.environ.get('MYSQLDATABASE'),
             port=int(os.environ.get('MYSQLPORT', 3306)),
+            charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
         )
     return g.db
+ 
 @app.teardown_appcontext
 def teardown_db(exception):
     db = g.pop('db', None)
