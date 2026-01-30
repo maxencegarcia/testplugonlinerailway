@@ -88,7 +88,72 @@ def show_accueil():
             return redirect('/admin/commande/index')
         else:
             return redirect('/client/ski/show')
-    return render_template('auth/layout.html')
+    
+    # Vérifier si le template existe
+    try:
+        return render_template('auth/layout.html')
+    except Exception as e:
+        print(f"⚠️  Template auth/layout.html non trouvé: {e}")
+        # Fallback : rediriger vers /login si le template n'existe pas
+        return redirect('/login')
+
+
+# Gestionnaire d'erreurs
+@app.errorhandler(404)
+def page_not_found(e):
+    """Gestion des erreurs 404"""
+    return """
+    <html>
+    <head>
+        <title>404 - Page non trouvée</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 600px;
+                margin: 100px auto;
+                padding: 20px;
+                text-align: center;
+            }
+            h1 { color: #e74c3c; }
+            a { color: #3498db; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <h1>404 - Page non trouvée</h1>
+        <p>La page que vous recherchez n'existe pas.</p>
+        <p><a href="/login">→ Aller à la page de connexion</a></p>
+    </body>
+    </html>
+    """, 404
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    """Gestion des erreurs 500"""
+    print(f"❌ ERREUR 500: {e}")
+    return """
+    <html>
+    <head>
+        <title>500 - Erreur serveur</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 600px;
+                margin: 100px auto;
+                padding: 20px;
+                text-align: center;
+            }
+            h1 { color: #e74c3c; }
+            a { color: #3498db; text-decoration: none; }
+        </style>
+    </head>
+    <body>
+        <h1>500 - Erreur serveur</h1>
+        <p>Une erreur interne s'est produite.</p>
+        <p><a href="/login">→ Aller à la page de connexion</a></p>
+    </body>
+    </html>
+    """, 500
 
 
 # ============================================================================
@@ -156,6 +221,18 @@ if __name__ == "__main__":
     print(f"Host: 0.0.0.0")
     print(f"MySQL Host: {os.environ.get('MYSQLHOST', 'NOT SET')}")
     print(f"MySQL Database: {os.environ.get('MYSQLDATABASE', 'NOT SET')}")
+    
+    # Vérifier les dossiers importants
+    if os.path.exists('templates'):
+        print(f"✅ Dossier templates/ trouvé")
+    else:
+        print(f"⚠️  Dossier templates/ NON TROUVÉ")
+    
+    if os.path.exists('static'):
+        print(f"✅ Dossier static/ trouvé")
+    else:
+        print(f"⚠️  Dossier static/ NON TROUVÉ")
+    
     print("=" * 60)
     
     # Démarrer l'application
