@@ -40,11 +40,11 @@ load_dotenv()                             # à ajouter
 
 def get_db():
     if 'db' not in g:
-        g.db =  pymysql.connect(
-            host=os.environ.get("serveurmysql.iut-bm.univ-fcomte.fr"),                # à modifier
-            user=os.environ.get("educret"),               # à modifier
-            password=os.environ.get("secret"),        # à modifier
-            database=os.environ.get("BDD_educret_sae"),        # à modifier
+        g.db = pymysql.connect(
+            host="serveurmysql.iut-bm.univ-fcomte.fr", # Directement l'adresse
+            user="educret", 
+            password="votre_mot_de_passe_ici", # Mets ton vrai mot de passe
+            database="BDD_educret_sae",
             charset='utf8mb4',
             cursorclass=pymysql.cursors.DictCursor
         )
